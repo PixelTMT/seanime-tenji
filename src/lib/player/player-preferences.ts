@@ -52,6 +52,10 @@ export type PlayerPreferences = {
      * Null means use the built-in mpv player.
      */
     externalPlayerTemplate: string | null
+    /**
+     * Custom mpv configuration.
+     */
+    mpvConf: string
 }
 
 const DEFAULTS: PlayerPreferences = {
@@ -74,6 +78,7 @@ const DEFAULTS: PlayerPreferences = {
     autoSkipOpEd: false,
     wyzieApiKey: "",
     externalPlayerTemplate: null,
+    mpvConf: "",
 }
 
 const STORAGE_KEY = "player-prefs"

@@ -414,6 +414,13 @@ export default function ProfileScreen() {
                     <ProfileMenuSection title="Player">
                         <ProfileMenuItem
                             icon="play-circle-outline"
+                            label="Built-in Player"
+                            detail="Settings & troubleshooting"
+                            onPress={() => router.push("/(app)/(tabs)/(profile)/built-in-player-settings" as never)}
+                        />
+                        <RowDivider />
+                        <ProfileMenuItem
+                            icon="play-circle-outline"
                             label="External Player"
                             detail={externalPlayerLabel}
                             onPress={() => setPlayerPickerOpen(true)}

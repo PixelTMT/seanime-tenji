@@ -42,6 +42,10 @@ public class ExpoMpvPlayerModule: Module {
         Function("setWindowBrightness") { (brightness: Double) in }
 
         View(MpvSurfaceExpoView.self) {
+            Prop("mpvConf") { (view: MpvSurfaceExpoView, conf: String?) in
+                view.setMpvConf(conf)
+            }
+
             // All video load options via a single "source" prop
             Prop("source") { (view: MpvSurfaceExpoView, source: [String: Any]?) in
                 guard let source = source,

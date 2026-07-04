@@ -76,6 +76,10 @@ class ExpoMpvPlayerModule : Module() {
         }
 
         View(MpvPlayerView::class) {
+            Prop("mpvConf") { view: MpvPlayerView, conf: String? ->
+                view.setMpvConf(conf)
+            }
+
             Prop("source") { view: MpvPlayerView, source: Map<String, Any?>? ->
                 if (source == null) return@Prop
                 val url = source["url"] as? String ?: return@Prop

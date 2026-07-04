@@ -77,7 +77,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     // Lifecycle
     // -------------------------------------------------------------------
 
-    fun start() {
+    fun start(mpvConf: String? = null) {
         if (initialized) return
 
         MPVLib.create(context)
@@ -131,7 +131,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         MPVLib.setOptionString("pause", "yes")
 
         // config dir with subfont.ttf
-        setupConfigDir()
+        setupConfigDir(mpvConf)
 
         MPVLib.init()
         MPVLib.addObserver(this)
@@ -769,9 +769,30 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         MPVLib.observeProperty("audio-delay", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
     }
 
-    private fun setupConfigDir() {
+    private fun setupConfigDir(mpvConf: String? = null) {
         val mpvDir = File(context.filesDir, "mpv")
         if (!mpvDir.exists()) mpvDir.mkdirs()
+
+        // write mpv.conf if provided
+        if (!mpvConf.isNullOrBlank()) {
+            try {
+                val confFile = File(mpvDir, "mpv.conf")
+                confFile.writeText(mpvConf)
+                Log.d(TAG, "mpv.conf written to ${confFile.path}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to write mpv.conf", e)
+            }
+        } else {
+            // clear mpv.conf if it exists and no config provided
+            try {
+                val confFile = File(mpvDir, "mpv.conf")
+                if (confFile.exists()) {
+                    confFile.delete()
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
 
         // copy subfont.ttf from assets if available
         try {

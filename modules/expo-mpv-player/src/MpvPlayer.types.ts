@@ -167,6 +167,7 @@ type NativeEvent<T> = { nativeEvent: T }
 
 export type MpvPlayerViewProps = ViewProps & {
     source?: MpvVideoSource
+    mpvConf?: string
     nowPlayingMetadata?: NowPlayingMetadata
     onLoad?: (event: NativeEvent<OnLoadEventPayload>) => void
     onProgress?: (event: NativeEvent<OnProgressEventPayload>) => void

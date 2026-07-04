@@ -132,7 +132,7 @@ final class MPVLayerRenderer {
 
     // MARK: - Lifecycle
 
-    func start() throws {
+    func start(mpvConf: String? = nil) throws {
         guard !isRunning else { return }
         guard let handle = mpv_create() else {
             throw RendererError.mpvCreationFailed
@@ -165,6 +165,9 @@ final class MPVLayerRenderer {
         #endif
         checkError(mpv_set_option_string(handle, "hwdec-codecs", "all"))
         checkError(mpv_set_option_string(handle, "hwdec-software-fallback", "yes"))
+
+        // Config
+        setupConfigDir(handle: handle, mpvConf: mpvConf)
 
         // Subtitle settings
         checkError(mpv_set_option_string(handle, "video-zoom", "0"))
@@ -846,6 +849,26 @@ final class MPVLayerRenderer {
         }
 
         return info
+    }
+
+    private func setupConfigDir(handle: OpaquePointer, mpvConf: String?) {
+        let fileManager = FileManager.default
+        guard let libraryDir = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first else { return }
+        let mpvDir = libraryDir.appendingPathComponent("mpv")
+
+        if !fileManager.fileExists(atPath: mpvDir.path) {
+            try? fileManager.createDirectory(at: mpvDir, withIntermediateDirectories: true)
+        }
+
+        let confFile = mpvDir.appendingPathComponent("mpv.conf")
+        if let mpvConf = mpvConf, !mpvConf.isEmpty {
+            try? mpvConf.write(to: confFile, atomically: true, encoding: .utf8)
+        } else {
+            try? fileManager.removeItem(at: confFile)
+        }
+
+        checkError(mpv_set_option_string(handle, "config", "yes"))
+        checkError(mpv_set_option_string(handle, "config-dir", mpvDir.path))
     }
 
     /// No-op for vo_avfoundation
