@@ -108,6 +108,7 @@ export function useMpvPlayer() {
             })),
             startPosition: source.resumePositionSec,
             autoplay: prefs.autoPlay,
+            mpvConf: prefs.mpvConf,
         }
     }, [source])
     const shouldAutoplay = videoSource?.autoplay ?? true

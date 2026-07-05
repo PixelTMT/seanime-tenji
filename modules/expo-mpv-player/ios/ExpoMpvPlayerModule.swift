@@ -63,7 +63,8 @@ public class ExpoMpvPlayerModule: Module {
                     headers: source["headers"] as? [String: String],
                     externalSubtitles: externalSubs,
                     startPosition: source["startPosition"] as? Double,
-                    autoplay: (source["autoplay"] as? Bool) ?? true
+                    autoplay: (source["autoplay"] as? Bool) ?? true,
+                    mpvConf: source["mpvConf"] as? String
                 )
 
                 view.setSource(config)
