@@ -87,34 +87,33 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
 
     fun setMpvConf(conf: String?) {
         this.mpvConf = conf
-        // if renderer is not started, it will pick up the conf on start
-        // if it is already started, we don't restart it here to avoid playback interruption
-        // normally mpvConf is set before playback starts
-        if (!rendererStarted) {
-            renderer = MPVLayerRenderer(context).also {
-                it.delegate = this
-                it.start(mpvConf)
-            }
-            rendererStarted = true
-
-            pipController = PiPController(context, appContext).also {
-                it.setPlayerView(textureView)
-                it.delegate = this
-            }
-        }
     }
 
-    private fun ensureRenderer() {
-        if (!rendererStarted) {
-            renderer = MPVLayerRenderer(context).also {
-                it.delegate = this
-                it.start(mpvConf)
-            }
-            rendererStarted = true
+    private val rendererLock = Any()
 
-            pipController = PiPController(context, appContext).also {
-                it.setPlayerView(textureView)
-                it.delegate = this
+    private fun ensureRenderer() {
+        if (rendererStarted && renderer != null) return
+        synchronized(rendererLock) {
+            if (rendererStarted && renderer != null) return
+
+            try {
+                val r = MPVLayerRenderer(context)
+                r.delegate = this
+                r.start(mpvConf)
+                renderer = r
+
+                pipController = PiPController(context, appContext).also {
+                    it.setPlayerView(textureView)
+                    it.delegate = this
+                }
+
+                pendingSurface?.let {
+                    r.attachSurface(it)
+                    pendingSurface = null
+                }
+                rendererStarted = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize mpv renderer", e)
             }
         }
     }
@@ -532,6 +531,8 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
         surfaceTexture = null
         surfaceReady = false
         renderer = null
+        rendererStarted = false
+        pendingSurface = null
     }
 
     override fun onDetachedFromWindow() {

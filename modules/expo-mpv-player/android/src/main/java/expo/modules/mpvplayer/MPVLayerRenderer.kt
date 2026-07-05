@@ -133,6 +133,8 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         // config dir with subfont.ttf
         setupConfigDir(mpvConf)
 
+        MPVLib.setOptionString("config", "yes")
+
         MPVLib.init()
         MPVLib.addObserver(this)
         observeProperties()
@@ -805,7 +807,6 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
             // asset not bundled, skip
         }
 
-        MPVLib.setOptionString("config", "yes")
         MPVLib.setOptionString("config-dir", mpvDir.path)
     }
 
