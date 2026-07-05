@@ -113,8 +113,9 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
             rendererStarted = true
 
             pipController = PiPController(context, appContext).also {
-            it.setPlayerView(textureView)
-            it.delegate = this
+                it.setPlayerView(textureView)
+                it.delegate = this
+            }
         }
     }
 
