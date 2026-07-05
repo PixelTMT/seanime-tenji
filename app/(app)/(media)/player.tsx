@@ -914,6 +914,7 @@ function PlayerScreenInner() {
                     <MpvPlayerView
                         ref={player.viewRef}
                         source={player.videoSource}
+                        mpvConf={player.mpvConf}
                         nowPlayingMetadata={player.nowPlayingMetadata}
                         onLoad={player.onNativeLoad}
                         onProgress={player.onNativeProgress}

@@ -47,6 +47,7 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
 
     // Pending config waiting for renderer to start
     private var pendingConfig: VideoLoadConfig?
+    private var mpvConf: String?
 
     // Event emitters set by the Expo module
     let onLoad = EventDispatcher()
@@ -103,7 +104,11 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
         }
     }
 
-    // MARK: - Source Prop
+    // MARK: - Props
+
+    func setMpvConf(_ conf: String?) {
+        self.mpvConf = conf
+    }
 
     func setSource(_ config: VideoLoadConfig) {
         if !hasStartedRenderer {
@@ -120,7 +125,7 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
         let newRenderer = MPVLayerRenderer(displayLayer: displayLayer)
         newRenderer.delegate = self
         do {
-            try newRenderer.start()
+            try newRenderer.start(mpvConf: mpvConf)
         } catch {
             print("[MpvPlayerView] Failed to start renderer: \(error)")
             onError(["error": "\(error)"])

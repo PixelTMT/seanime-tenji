@@ -110,6 +110,8 @@ export function useMpvPlayer() {
             autoplay: prefs.autoPlay,
         }
     }, [source])
+
+    const mpvConf = React.useMemo(() => getPlayerPreferences().mpvConf, [source])
     const shouldAutoplay = videoSource?.autoplay ?? true
 
     const nowPlayingMetadata = React.useMemo<NowPlayingMetadata | undefined>(() => {
@@ -543,6 +545,7 @@ export function useMpvPlayer() {
         // view integration
         viewRef,
         videoSource,
+        mpvConf,
         nowPlayingMetadata,
         onNativeLoad,
         onNativeProgress,

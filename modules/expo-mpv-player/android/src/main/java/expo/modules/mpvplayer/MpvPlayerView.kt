@@ -70,6 +70,8 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
         renderer?.forceRedraw()
     }
 
+    private var mpvConf: String? = null
+
     init {
         setBackgroundColor(Color.BLACK)
 
@@ -81,16 +83,38 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
             surfaceTextureListener = this@MpvPlayerView
         }
         addView(textureView)
+    }
 
-        renderer = MPVLayerRenderer(context).also {
-            it.delegate = this
-            it.start()
-        }
-        rendererStarted = true
+    fun setMpvConf(conf: String?) {
+        this.mpvConf = conf
+    }
 
-        pipController = PiPController(context, appContext).also {
-            it.setPlayerView(textureView)
-            it.delegate = this
+    private val rendererLock = Any()
+
+    private fun ensureRenderer() {
+        if (rendererStarted && renderer != null) return
+        synchronized(rendererLock) {
+            if (rendererStarted && renderer != null) return
+
+            try {
+                val r = MPVLayerRenderer(context)
+                r.delegate = this
+                r.start(mpvConf)
+                renderer = r
+
+                pipController = PiPController(context, appContext).also {
+                    it.setPlayerView(textureView)
+                    it.delegate = this
+                }
+
+                pendingSurface?.let {
+                    r.attachSurface(it)
+                    pendingSurface = null
+                }
+                rendererStarted = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize mpv renderer", e)
+            }
         }
     }
 
@@ -138,6 +162,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     private fun loadVideoInternal(config: VideoLoadConfig) {
+        ensureRenderer()
         currentUrl = config.url
         cachedPosition = 0.0
         cachedDuration = 0.0
@@ -158,6 +183,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     fun play() {
+        ensureRenderer()
         intendedPlayState = true
         renderer?.play()
         pipController?.setPlaybackRate(1.0)
@@ -165,6 +191,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     fun pause() {
+        ensureRenderer()
         intendedPlayState = false
         renderer?.pause()
         pipController?.setPlaybackRate(0.0)
@@ -172,31 +199,38 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     fun seekTo(position: Double) {
+        ensureRenderer()
         cachedPosition = position
         renderer?.seekTo(position)
     }
 
     fun seekBy(offset: Double) {
+        ensureRenderer()
         renderer?.seekBy(offset)
     }
 
     fun setSpeed(speed: Double) {
+        ensureRenderer()
         renderer?.setSpeed(speed)
     }
 
     fun getSpeed(): Double {
+        ensureRenderer()
         return renderer?.getSpeed() ?: 1.0
     }
 
     fun isPaused(): Boolean {
+        ensureRenderer()
         return renderer?.isPaused ?: true
     }
 
     fun getCurrentPosition(): Double {
+        ensureRenderer()
         return renderer?.cachedPosition ?: cachedPosition
     }
 
     fun getDuration(): Double {
+        ensureRenderer()
         return renderer?.cachedDuration ?: cachedDuration
     }
 
@@ -271,66 +305,82 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     fun getSubtitleTracks(): List<Map<String, Any>> {
+        ensureRenderer()
         return renderer?.getSubtitleTracks() ?: emptyList()
     }
 
     fun getChapters(): List<Map<String, Any>> {
+        ensureRenderer()
         return renderer?.getChapters() ?: emptyList()
     }
 
     fun setSubtitleTrack(trackId: Int) {
+        ensureRenderer()
         renderer?.setSubtitleTrack(trackId)
     }
 
     fun disableSubtitles() {
+        ensureRenderer()
         renderer?.disableSubtitles()
     }
 
     fun getCurrentSubtitleTrack(): Int {
+        ensureRenderer()
         return renderer?.getCurrentSubtitleTrack() ?: -1
     }
 
     fun addSubtitleFile(url: String, select: Boolean) {
+        ensureRenderer()
         renderer?.addSubtitleFile(url, select)
     }
 
     fun setSubtitleDelay(delay: Double) {
+        ensureRenderer()
         renderer?.setSubtitleDelay(delay)
     }
 
     fun setSubtitleFontSize(size: Int) {
+        ensureRenderer()
         renderer?.setSubtitleFontSize(size)
     }
 
     fun setSubtitleVisibility(visible: Boolean) {
+        ensureRenderer()
         renderer?.setSubtitleVisibility(visible)
     }
 
     fun setSubtitlePosition(position: Int) {
+        ensureRenderer()
         renderer?.setSubtitlePosition(position)
     }
 
     fun getAudioTracks(): List<Map<String, Any>> {
+        ensureRenderer()
         return renderer?.getAudioTracks() ?: emptyList()
     }
 
     fun setAudioTrack(trackId: Int) {
+        ensureRenderer()
         renderer?.setAudioTrack(trackId)
     }
 
     fun getCurrentAudioTrack(): Int {
+        ensureRenderer()
         return renderer?.getCurrentAudioTrack() ?: -1
     }
 
     fun setAudioDelay(delay: Double) {
+        ensureRenderer()
         renderer?.setAudioDelay(delay)
     }
 
     fun setVideoZoom(scale: Double) {
+        ensureRenderer()
         renderer?.setVideoZoom(scale)
     }
 
     fun setZoomedToFill(zoomed: Boolean) {
+        ensureRenderer()
         _isZoomedToFill = zoomed
         renderer?.setZoomedToFill(zoomed)
     }
@@ -340,6 +390,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     fun getTechnicalInfo(): Map<String, Any> {
+        ensureRenderer()
         return renderer?.getTechnicalInfo() ?: emptyMap()
     }
 
@@ -480,6 +531,8 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
         surfaceTexture = null
         surfaceReady = false
         renderer = null
+        rendererStarted = false
+        pendingSurface = null
     }
 
     override fun onDetachedFromWindow() {

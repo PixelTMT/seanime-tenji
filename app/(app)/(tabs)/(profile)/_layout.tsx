@@ -7,6 +7,8 @@ export default function ProfileLayout() {
             <Stack.Screen name="server-downloads" />
             <Stack.Screen name="unmatched" />
             <Stack.Screen name="download-settings" />
+            <Stack.Screen name="built-in-player-settings" />
+            <Stack.Screen name="edit-mpv-conf" />
             <Stack.Screen name="my-lists" />
             <Stack.Screen name="active-stream" />
             <Stack.Screen name="logs" />
