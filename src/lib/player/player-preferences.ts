@@ -1,7 +1,56 @@
 import React from "react"
+import { Platform } from "react-native"
 import { createMMKV } from "react-native-mmkv"
 
 const storage = createMMKV({ id: "seanime-player-prefs" })
+
+const DEFAULT_MPV_CONF_ANDROID = `
+vo=gpu
+gpu-context=android
+opengl-es=yes
+hwdec=mediacodec-copy
+hwdec-codecs=h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1
+cache=yes
+cache-pause-initial=yes
+demuxer-max-bytes=150MiB
+demuxer-max-back-bytes=75MiB
+demuxer-readahead-secs=20
+demuxer-seekable-cache=yes
+force-seekable=yes
+hr-seek=yes
+hr-seek-framedrop=yes
+sub-scale-with-window=no
+sub-use-margins=no
+subs-match-os-language=yes
+subs-fallback=yes
+sub-auto=fuzzy
+sub-font-size=48
+sub-ass-override=no
+sub-ass-force-margins=yes
+stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5
+force-window=no
+keep-open=always
+keepaspect=yes
+video-zoom=0
+pause=yes
+`.trim()
+
+const DEFAULT_MPV_CONF_IOS = `
+vo=avfoundation
+avfoundation-composite-osd=yes
+hwdec=videotoolbox
+hwdec-codecs=all
+hwdec-software-fallback=yes
+video-zoom=0
+subs-match-os-language=yes
+subs-fallback=yes
+`.trim()
+
+export const DEFAULT_MPV_CONF = Platform.select({
+    android: DEFAULT_MPV_CONF_ANDROID,
+    ios: DEFAULT_MPV_CONF_IOS,
+    default: "",
+}) as string
 
 /**
  * Player preferences persisted across sessions via MMKV.
@@ -52,6 +101,10 @@ export type PlayerPreferences = {
      * Null means use the built-in mpv player.
      */
     externalPlayerTemplate: string | null
+    /**
+     * Content for the mpv.conf file.
+     */
+    mpvConf: string
 }
 
 const DEFAULTS: PlayerPreferences = {
@@ -74,6 +127,7 @@ const DEFAULTS: PlayerPreferences = {
     autoSkipOpEd: false,
     wyzieApiKey: "",
     externalPlayerTemplate: null,
+    mpvConf: DEFAULT_MPV_CONF,
 }
 
 const STORAGE_KEY = "player-prefs"

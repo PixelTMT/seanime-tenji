@@ -132,7 +132,7 @@ final class MPVLayerRenderer {
 
     // MARK: - Lifecycle
 
-    func start() throws {
+    func start(mpvConf: String?) throws {
         guard !isRunning else { return }
         guard let handle = mpv_create() else {
             throw RendererError.mpvCreationFailed
@@ -150,26 +150,8 @@ final class MPVLayerRenderer {
         var displayLayerPtr = Int64(layerPtrInt)
         checkError(mpv_set_option(handle, "wid", MPV_FORMAT_INT64, &displayLayerPtr))
 
-        // Use AVFoundation video output for PiP support
-        checkError(mpv_set_option_string(handle, "vo", "avfoundation"))
-
-        // Composite subtitles into the AVFoundation video frames from startup so
-        // PiP and rotation changes use the same subtitle path.
-        checkError(mpv_set_option_string(handle, "avfoundation-composite-osd", "yes"))
-
-        // Hardware decoding
-        #if targetEnvironment(simulator)
-        checkError(mpv_set_option_string(handle, "hwdec", "no"))
-        #else
-        checkError(mpv_set_option_string(handle, "hwdec", "videotoolbox"))
-        #endif
-        checkError(mpv_set_option_string(handle, "hwdec-codecs", "all"))
-        checkError(mpv_set_option_string(handle, "hwdec-software-fallback", "yes"))
-
-        // Subtitle settings
-        checkError(mpv_set_option_string(handle, "video-zoom", "0"))
-        checkError(mpv_set_option_string(handle, "subs-match-os-language", "yes"))
-        checkError(mpv_set_option_string(handle, "subs-fallback", "yes"))
+        // Set config dir and write mpv.conf
+        setupConfigDir(mpvConf: mpvConf)
 
         // Initialize
         let initStatus = mpv_initialize(handle)
@@ -187,6 +169,25 @@ final class MPVLayerRenderer {
         }, Unmanaged.passUnretained(self).toOpaque())
 
         isRunning = true
+    }
+
+    private func setupConfigDir(mpvConf: String?) {
+        guard let handle = mpv else { return }
+        let fileManager = FileManager.default
+        guard let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        let mpvDir = documentsURL.appendingPathComponent("mpv")
+
+        if !fileManager.fileExists(atPath: mpvDir.path) {
+            try? fileManager.createDirectory(at: mpvDir, withIntermediateDirectories: true)
+        }
+
+        if let mpvConf = mpvConf {
+            let confFile = mpvDir.appendingPathComponent("mpv.conf")
+            try? mpvConf.write(to: confFile, atomically: true, encoding: .utf8)
+        }
+
+        checkError(mpv_set_option_string(handle, "config", "yes"))
+        checkError(mpv_set_option_string(handle, "config-dir", mpvDir.path))
     }
 
     func stop() {

@@ -77,61 +77,13 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
     // Lifecycle
     // -------------------------------------------------------------------
 
-    fun start() {
+    fun start(mpvConf: String?) {
         if (initialized) return
 
         MPVLib.create(context)
 
-        // video output
-        MPVLib.setOptionString("vo", "gpu")
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("opengl-es", "yes")
-
-        // hardware decoding
-        MPVLib.setOptionString("hwdec", "mediacodec-copy")
-        MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-
-        // cache & demuxer
-        MPVLib.setOptionString("cache", "yes")
-        MPVLib.setOptionString("cache-pause-initial", "yes")
-        MPVLib.setOptionString("demuxer-max-bytes", "150MiB")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "75MiB")
-        MPVLib.setOptionString("demuxer-readahead-secs", "20")
-
-        // progressive streams should still accept range seeks when mpv cannot infer it
-        MPVLib.setOptionString("demuxer-seekable-cache", "yes")
-        MPVLib.setOptionString("force-seekable", "yes")
-
-        // exact seeking avoids Android keyframe seeks replaying the same segment
-        MPVLib.setOptionString("hr-seek", "yes")
-        MPVLib.setOptionString("hr-seek-framedrop", "yes")
-
-        // subtitles
-        MPVLib.setOptionString("sub-scale-with-window", "no")
-        MPVLib.setOptionString("sub-use-margins", "no")
-        MPVLib.setOptionString("subs-match-os-language", "yes")
-        MPVLib.setOptionString("subs-fallback", "yes")
-        MPVLib.setOptionString("sub-auto", "fuzzy")
-        MPVLib.setOptionString("sub-font-size", "48")
-        MPVLib.setOptionString("sub-ass-override", "no")
-        MPVLib.setOptionString("sub-ass-force-margins", "yes")
-
-        // network reconnection
-        MPVLib.setOptionString("stream-lavf-o", "reconnect=1,reconnect_streamed=1,reconnect_delay_max=5")
-
-        // playback behavior
-        MPVLib.setOptionString("force-window", "no")
-        MPVLib.setOptionString("keep-open", "always")
-
-        // aspect ratio
-        MPVLib.setOptionString("keepaspect", "yes")
-        MPVLib.setOptionString("video-zoom", "0")
-
-        // start paused
-        MPVLib.setOptionString("pause", "yes")
-
-        // config dir with subfont.ttf
-        setupConfigDir()
+        // config dir with subfont.ttf and mpv.conf
+        setupConfigDir(mpvConf)
 
         MPVLib.init()
         MPVLib.addObserver(this)
@@ -769,7 +721,7 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         MPVLib.observeProperty("audio-delay", MPVLib.MpvFormat.MPV_FORMAT_DOUBLE)
     }
 
-    private fun setupConfigDir() {
+    private fun setupConfigDir(mpvConf: String?) {
         val mpvDir = File(context.filesDir, "mpv")
         if (!mpvDir.exists()) mpvDir.mkdirs()
 
@@ -782,6 +734,16 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
             output.close()
         } catch (_: Exception) {
             // asset not bundled, skip
+        }
+
+        if (mpvConf != null) {
+            try {
+                val output = FileOutputStream(File(mpvDir, "mpv.conf"))
+                output.write(mpvConf.toByteArray())
+                output.close()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to write mpv.conf", e)
+            }
         }
 
         MPVLib.setOptionString("config", "yes")
