@@ -41,6 +41,7 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
     private var pipController: PiPController?
     private var hasStartedRenderer = false
     private var isZoomedFill = false
+    private var mpvConf: String?
     private let nowPlayingManager = MPVNowPlayingManager.shared
     private var lastNowPlayingSyncAt: CFAbsoluteTime = 0
     private var lastLayoutSize: CGSize = .zero
@@ -105,6 +106,10 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
 
     // MARK: - Source Prop
 
+    func setMpvConf(_ conf: String?) {
+        self.mpvConf = conf
+    }
+
     func setSource(_ config: VideoLoadConfig) {
         if !hasStartedRenderer {
             startRenderer()
@@ -120,7 +125,7 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
         let newRenderer = MPVLayerRenderer(displayLayer: displayLayer)
         newRenderer.delegate = self
         do {
-            try newRenderer.start()
+            try newRenderer.start(mpvConf: mpvConf)
         } catch {
             print("[MpvPlayerView] Failed to start renderer: \(error)")
             onError(["error": "\(error)"])

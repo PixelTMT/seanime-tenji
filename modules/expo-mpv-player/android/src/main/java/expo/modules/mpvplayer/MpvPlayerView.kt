@@ -49,6 +49,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     private var renderer: MPVLayerRenderer? = null
     private var pipController: PiPController? = null
 
+    private var mpvConf: String? = null
     private var currentUrl: String? = null
     private var cachedPosition: Double = 0.0
     private var cachedDuration: Double = 0.0
@@ -84,9 +85,7 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
 
         renderer = MPVLayerRenderer(context).also {
             it.delegate = this
-            it.start()
         }
-        rendererStarted = true
 
         pipController = PiPController(context, appContext).also {
             it.setPlayerView(textureView)
@@ -126,6 +125,10 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
 
     override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {}
 
+    fun setMpvConf(conf: String?) {
+        this.mpvConf = conf
+    }
+
     fun loadVideo(config: VideoLoadConfig) {
         if (config.url == currentUrl) return
 
@@ -138,6 +141,15 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
     }
 
     private fun loadVideoInternal(config: VideoLoadConfig) {
+        if (!rendererStarted) {
+            renderer?.start(mpvConf)
+            rendererStarted = true
+            pendingSurface?.let {
+                renderer?.attachSurface(it)
+                pendingSurface = null
+            }
+        }
+
         currentUrl = config.url
         cachedPosition = 0.0
         cachedDuration = 0.0
