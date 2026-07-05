@@ -226,12 +226,17 @@ final class MPVLayerRenderer {
         url: URL,
         headers: [String: String]? = nil,
         externalSubtitles: [(url: String, title: String?)]? = nil,
-        startPosition: Double? = nil
+        startPosition: Double? = nil,
+        mpvConf: String? = nil
     ) {
         pendingExternalSubtitles = externalSubtitles ?? []
 
         queue.async { [weak self] in
             guard let self else { return }
+
+            if let mpvConf = mpvConf, !mpvConf.isEmpty {
+                self.applyCustomConfig(mpvConf)
+            }
             self.isLoading = true
             self.isReadyToSeek = false
             DispatchQueue.main.async { [weak self] in
@@ -312,6 +317,26 @@ final class MPVLayerRenderer {
             .map { key, value in "\(key): \(value)" }
             .joined(separator: "\r\n")
         setProperty(name: "http-header-fields", value: headerString)
+    }
+
+    private func applyCustomConfig(_ mpvConf: String) {
+        // We apply each line as an option immediately for the current instance
+        mpvConf.enumerateLines { line, _ in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return }
+
+            let parts = trimmed.split(separator: "=", maxSplits: 1).map(String.init)
+            if parts.count == 2 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let value = parts[1].trimmingCharacters(in: .whitespaces)
+                self.setProperty(name: key, value: value)
+                print("[MPV] Applied custom option: \(key)=\(value)")
+            } else if parts.count == 1 {
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                self.setProperty(name: key, value: "yes")
+                print("[MPV] Applied custom flag: \(key)")
+            }
+        }
     }
 
     private func observeProperties() {

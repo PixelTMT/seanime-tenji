@@ -418,6 +418,13 @@ export default function ProfileScreen() {
                             detail={externalPlayerLabel}
                             onPress={() => setPlayerPickerOpen(true)}
                         />
+                        <RowDivider />
+                        <ProfileMenuItem
+                            icon="settings-outline"
+                            label="Built-in Player Settings"
+                            detail="Custom MPV configuration"
+                            onPress={() => router.push("/(app)/(tabs)/(profile)/player-settings" as never)}
+                        />
                     </ProfileMenuSection>
                 </View>
 

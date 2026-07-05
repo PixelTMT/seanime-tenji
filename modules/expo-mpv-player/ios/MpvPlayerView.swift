@@ -28,6 +28,7 @@ struct VideoLoadConfig {
     let externalSubtitles: [(url: String, title: String?)]
     let startPosition: Double?
     let autoplay: Bool
+    let mpvConf: String?
 }
 
 /// The native ExpoView that wraps an AVSampleBufferDisplayLayer and MPVLayerRenderer.
@@ -145,7 +146,8 @@ final class MpvSurfaceExpoView: ExpoView, MPVLayerRendererDelegate, PiPControlle
             url: config.url,
             headers: config.headers,
             externalSubtitles: config.externalSubtitles,
-            startPosition: config.startPosition
+            startPosition: config.startPosition,
+            mpvConf: config.mpvConf
         )
 
         if config.autoplay {

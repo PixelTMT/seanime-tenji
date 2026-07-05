@@ -95,13 +95,15 @@ class ExpoMpvPlayerModule : Module() {
 
                 val startPosition = (source["startPosition"] as? Number)?.toDouble()
                 val autoplay = (source["autoplay"] as? Boolean) ?: true
+                val mpvConf = source["mpvConf"] as? String
 
                 val config = VideoLoadConfig(
                     url = url,
                     headers = headers,
                     externalSubtitles = externalSubtitles,
                     startPosition = startPosition,
-                    autoplay = autoplay
+                    autoplay = autoplay,
+                    mpvConf = mpvConf
                 )
                 view.loadVideo(config)
             }

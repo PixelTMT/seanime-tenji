@@ -215,9 +215,14 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
         url: String,
         headers: Map<String, String>?,
         startPosition: Double?,
-        externalSubtitles: List<Pair<String, String?>>?
+        externalSubtitles: List<Pair<String, String?>>?,
+        mpvConf: String? = null
     ) {
         if (!initialized) return
+
+        if (!mpvConf.isNullOrEmpty()) {
+            applyCustomConfig(mpvConf)
+        }
 
         // stop any current playback
         MPVLib.command(arrayOf("stop"))
@@ -786,6 +791,37 @@ class MPVLayerRenderer(private val context: Context) : MPVLib.EventObserver {
 
         MPVLib.setOptionString("config", "yes")
         MPVLib.setOptionString("config-dir", mpvDir.path)
+    }
+
+    private fun applyCustomConfig(mpvConf: String) {
+        val mpvDir = File(context.filesDir, "mpv")
+        if (!mpvDir.exists()) mpvDir.mkdirs()
+
+        val configFile = File(mpvDir, "mpv.conf")
+        try {
+            FileOutputStream(configFile).use { it.write(mpvConf.toByteArray()) }
+            Log.d(TAG, "Wrote custom mpv.conf")
+
+            // we apply each line as an option immediately for the current instance
+            mpvConf.lineSequence()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && !it.startsWith("#") }
+                .forEach { line ->
+                    val parts = line.split('=', limit = 2)
+                    if (parts.size == 2) {
+                        val key = parts[0].trim()
+                        val value = parts[1].trim()
+                        MPVLib.setOptionString(key, value)
+                        Log.d(TAG, "Applied custom option: $key=$value")
+                    } else if (parts.size == 1) {
+                        val key = parts[0].trim()
+                        MPVLib.setOptionString(key, "yes")
+                        Log.d(TAG, "Applied custom flag: $key")
+                    }
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to write or apply mpv.conf", e)
+        }
     }
 
     private fun formatMpvSeconds(seconds: Double): String {

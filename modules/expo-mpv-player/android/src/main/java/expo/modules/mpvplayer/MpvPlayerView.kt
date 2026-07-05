@@ -32,7 +32,8 @@ data class VideoLoadConfig(
     val headers: Map<String, String>? = null,
     val externalSubtitles: List<Pair<String, String?>>? = null,
     val startPosition: Double? = null,
-    val autoplay: Boolean = true
+    val autoplay: Boolean = true,
+    val mpvConf: String? = null
 )
 
 class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context, appContext),
@@ -147,7 +148,8 @@ class MpvPlayerView(context: Context, appContext: AppContext) : ExpoView(context
             url = config.url,
             headers = config.headers,
             startPosition = config.startPosition,
-            externalSubtitles = config.externalSubtitles
+            externalSubtitles = config.externalSubtitles,
+            mpvConf = config.mpvConf
         )
 
         if (config.autoplay) {

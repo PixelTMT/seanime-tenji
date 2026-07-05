@@ -29,6 +29,7 @@ export type MpvVideoSource = {
     externalSubtitles?: MpvExternalSubtitle[]
     startPosition?: number
     autoplay?: boolean
+    mpvConf?: string
 }
 
 ///////////////////////////////////////////////////////////////////////////////
